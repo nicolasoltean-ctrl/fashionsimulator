@@ -20,6 +20,14 @@ would actually fit a body with your measurements.
 - **Layering.** A jacket is fitted over the sweater under it, not over bare
   skin. Tops can be worn tucked or untucked.
 
+**Live copy:** https://nicolasoltean-ctrl.github.io/fashionsimulator/
+
+The live copy is a static site on GitHub Pages, rebuilt on every push by
+`.github/workflows/pages.yml`. It has everything except the server that
+fetches shop pages, so there you add clothing with the bookmarklet or by
+pasting a size chart; importing straight from a pasted link needs the app
+running locally (below) or on a host that runs Node.
+
 ## Run it
 
 ```bash

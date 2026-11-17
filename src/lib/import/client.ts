@@ -22,12 +22,22 @@ async function proxyFetch(url: string): Promise<ProxyResult> {
   }
   const type = res.headers.get('content-type') ?? '';
   if (!type.includes('application/json')) {
-    return { ok: false, error: 'The import service is not running on this host (static deployment). Use the bookmarklet or paste the size chart instead.' };
+    return { ok: false, error: 'This hosted copy cannot fetch shop pages itself.' };
   }
   return (await res.json()) as ProxyResult;
 }
 
 export class ImportError extends Error {}
+
+/** Whether this copy of the app has its import server (a static host does not). */
+export async function importServiceAvailable(): Promise<boolean> {
+  try {
+    const res = await fetch('/api/health');
+    return res.ok && (res.headers.get('content-type') ?? '').includes('application/json');
+  } catch {
+    return false;
+  }
+}
 
 export function normaliseUrl(input: string): string {
   const s = input.trim();

@@ -4,7 +4,7 @@ import {
   type Category, type DimKey, type FitIntent, type Garment, type Neckline, type SizeChart, type SleeveStyle,
 } from '../lib/garments/types';
 import { bookmarkletHref } from '../lib/import/bookmarklet';
-import { dominantColor, importFromUrl, ImportError } from '../lib/import/client';
+import { dominantColor, importFromUrl, importServiceAvailable, ImportError } from '../lib/import/client';
 import type { ProductDraft } from '../lib/import/extract';
 import { blankChart, type ParsedChart } from '../lib/import/sizechart';
 import { newId } from '../state/store';
@@ -87,6 +87,13 @@ export function GarmentEditor({ seed, onClose, onSave }: Props) {
   const [error, setError] = useState('');
   const [colorTouched, setColorTouched] = useState(!!seed && !seed.isNew);
   const [chartIndex, setChartIndex] = useState(0);
+  // A static host (e.g. GitHub Pages) has no server to fetch shop pages with.
+  const [canFetch, setCanFetch] = useState(true);
+  useEffect(() => {
+    let live = true;
+    void importServiceAvailable().then((ok) => { if (live) setCanFetch(ok); });
+    return () => { live = false; };
+  }, []);
   const dialog = useRef<HTMLDivElement>(null);
   const bookmarklet = useRef<HTMLAnchorElement>(null);
 
@@ -99,7 +106,7 @@ export function GarmentEditor({ seed, onClose, onSave }: Props) {
 
   // React refuses javascript: URLs in JSX, so the bookmarklet link is set directly.
   useEffect(() => {
-    bookmarklet.current?.setAttribute('href', bookmarkletHref(window.location.origin));
+    bookmarklet.current?.setAttribute('href', bookmarkletHref(window.location.origin + window.location.pathname));
   }, [state]);
 
   // Pick up the garment's colour from the product photo.
@@ -144,28 +151,32 @@ export function GarmentEditor({ seed, onClose, onSave }: Props) {
 
         {!g && (
           <div className="modal-body">
-            <section className="import-way">
-              <h3>From a product page</h3>
-              <p className="muted">Paste the address of any clothing product page — a boutique, a marketplace, a major retailer. Atelier reads the name, photo and size chart.</p>
-              <form className="url-form" onSubmit={(e) => { e.preventDefault(); if (!busy && url.trim()) void runImport(); }}>
-                <input
-                  type="text"
-                  inputMode="url"
-                  aria-label="Product page address"
-                  placeholder="https://shop.example.com/products/linen-shirt"
-                  value={url}
-                  onChange={(e) => { setUrl(e.target.value); setError(''); }}
-                />
-                <button type="submit" className="btn primary" disabled={busy || !url.trim()}>{busy ? 'Reading…' : 'Import'}</button>
-              </form>
-              {error && <p className="error" role="alert">{error}</p>}
-            </section>
+            {canFetch && (
+              <section className="import-way">
+                <h3>From a product page</h3>
+                <p className="muted">Paste the address of any clothing product page — a boutique, a marketplace, a major retailer. Atelier reads the name, photo and size chart.</p>
+                <form className="url-form" onSubmit={(e) => { e.preventDefault(); if (!busy && url.trim()) void runImport(); }}>
+                  <input
+                    type="text"
+                    inputMode="url"
+                    aria-label="Product page address"
+                    placeholder="https://shop.example.com/products/linen-shirt"
+                    value={url}
+                    onChange={(e) => { setUrl(e.target.value); setError(''); }}
+                  />
+                  <button type="submit" className="btn primary" disabled={busy || !url.trim()}>{busy ? 'Reading…' : 'Import'}</button>
+                </form>
+                {error && <p className="error" role="alert">{error}</p>}
+              </section>
+            )}
 
             <section className="import-way">
-              <h3>From your own browser</h3>
+              <h3>{canFetch ? 'From your own browser' : 'From a product page'}</h3>
               <p className="muted">
-                Some shops block automated requests, or only show their size guide in a pop-up. Drag this button to your bookmarks bar; then, on any
-                product page — with the size guide open — click it to send the piece here.
+                {canFetch
+                  ? 'Some shops block automated requests, or only show their size guide in a pop-up. '
+                  : 'Works with any shop — a boutique, a marketplace, a major retailer. '}
+                Drag this button to your bookmarks bar; then, on any product page — with the size guide open — click it to send the piece here.
               </p>
               <a ref={bookmarklet} className="bookmarklet" onClick={(e) => e.preventDefault()} title="Drag me to your bookmarks bar">
                 Send to Atelier

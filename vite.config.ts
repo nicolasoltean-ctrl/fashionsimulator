@@ -5,6 +5,8 @@ import { apiMiddleware } from './server/proxy.ts';
 // The import proxy (/api/*) is mounted into both the dev and preview servers,
 // so `npm run dev` is all that is needed to run the whole app.
 export default defineConfig({
+  // Relative asset paths, so the build also works under a sub-path (GitHub Pages).
+  base: './',
   plugins: [
     react(),
     {

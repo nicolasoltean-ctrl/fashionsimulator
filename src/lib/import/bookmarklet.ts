@@ -9,7 +9,8 @@ export const IMPORT_MESSAGE = 'atelier-import';
 export const READY_MESSAGE = 'atelier-ready';
 export const BOOKMARKLET_HASH = '#capture';
 
-function capture(appOrigin: string, hash: string, readyMsg: string, importMsg: string) {
+function capture(appUrl: string, hash: string, readyMsg: string, importMsg: string) {
+  const appOrigin = new URL(appUrl).origin;
   const T = (el: Element | null | undefined) => (el?.textContent ?? '').replace(/\s+/g, ' ').trim();
   const meta: Record<string, string> = {};
   document.querySelectorAll('meta[property],meta[name]').forEach((m) => {
@@ -60,7 +61,7 @@ function capture(appOrigin: string, hash: string, readyMsg: string, importMsg: s
       if (hints.join(' ').length < 3000) hints.push(T(el).slice(0, 1200));
     });
   const snap = { url: location.href, title: document.title, meta, jsonLd, tables, text: hints.join(' ').slice(0, 3000) };
-  const win = window.open(appOrigin + '/' + hash);
+  const win = window.open(appUrl + hash);
   if (!win) {
     alert('Atelier: allow pop-ups for this site, then click the bookmarklet again.');
     return;
@@ -73,8 +74,11 @@ function capture(appOrigin: string, hash: string, readyMsg: string, importMsg: s
   window.addEventListener('message', onReady);
 }
 
-/** javascript: URL for the bookmarks bar, bound to wherever this app is served. */
-export function bookmarkletHref(appOrigin: string): string {
-  const args = [appOrigin, BOOKMARKLET_HASH, READY_MESSAGE, IMPORT_MESSAGE].map((a) => JSON.stringify(a)).join(',');
+/**
+ * javascript: URL for the bookmarks bar, bound to wherever this app is served
+ * (`appUrl` is the page address without query or hash).
+ */
+export function bookmarkletHref(appUrl: string): string {
+  const args = [appUrl, BOOKMARKLET_HASH, READY_MESSAGE, IMPORT_MESSAGE].map((a) => JSON.stringify(a)).join(',');
   return `javascript:(${capture.toString()})(${args});void 0`;
 }
