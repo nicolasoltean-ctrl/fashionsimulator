@@ -3,6 +3,10 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main, claude/happy-feynman-hittn9]
+    # Research notes and reports are not part of the site.
+    paths-ignore:
+      - 'research_notes/**'
+      - 'reports/**'
   workflow_dispatch:
 
 permissions:
